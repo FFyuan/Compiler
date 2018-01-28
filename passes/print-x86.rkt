@@ -15,7 +15,7 @@
   (lambda (p)
     (define mac? (equal? 'macosx (system-type 'os)))
     (match p
-           [`(program ,size ,type ,stms) 
+           [`(program (,size ,rspills) ,type ,stms) 
     (string-append
       (string-append* 
         ".global " (if mac? "_" "") "main" "\n" 
@@ -23,6 +23,12 @@
         "    pushq %rbp" "\n"
         "    movq %rsp, %rbp" "\n" 
         (if (< 0 size) (string-append "    subq $" (number->string size) ", %rsp" "\n") "")
+        "    movq $16384, %rdi" "\n"
+        "    movq $16, %rsi" "\n"
+        "    callq _initialize" "\n"
+        "    movq _rootstack_begin(%rip), %r15" "\n"
+        "    movq $0, (%r15)" "\n"
+        "    addq $" (number->string rspills) ", %r15" "\n"
         (map (lambda (stm) 
                (match stm
                       [`(label ,label)
@@ -42,6 +48,7 @@
         [`(type Integer) (string-append "    callq " (if mac? "_" "") "print_int" "\n")]
         [`(type Boolean) (string-append "    callq " (if mac? "_" "") "print_bool" "\n")])
       "    movq $0, %rax" "\n"
+      "    subq $" (number->string rspills) ", %r15" "\n"
       (if (< 0 size) (string-append  "    addq $" (number->string size) ", %rsp" "\n") "")
       "    popq %rbp" "\n"
       "    retq" "\n")])))
