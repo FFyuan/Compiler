@@ -77,7 +77,7 @@
   (lambda (program)
     (match program
            [`(program (,vars ,graph ,type) ,stms)
-             (let* ([alist (color-graph graph vars)]
+             (let* ([alist (color-graph graph (map car vars))]
                     [maxn (* 16 (apply max (append '(0) (map cadr alist))))]
                     [var-types vars]
                     [rspills (* 16 (length (filter (lambda (e)
