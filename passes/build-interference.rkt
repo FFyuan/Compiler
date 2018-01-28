@@ -4,7 +4,7 @@
 (provide build-interference)
 
 (define add-edges-helper
-  (lambda (d vs ignores graph)
+  (lambda (d vs ignores graph var-types)
     (let ([ign (remove null 
                        (map (lambda (x) 
                               (match x 
@@ -13,30 +13,38 @@
       (match d
              [`(var ,var)
                (begin
+                 (let ([type (lookup var var-types)])
+                    (if (equal? 'Vector type)
+                        (map (lambda (r)
+                                (add-edge graph var r)) caller-save)
+                        (void)))
                  (map (lambda (v) (add-edge graph var v)) (filter (lambda (x) (not (member x ign))) vs))
                  graph)]
              [else graph]))))
 
 (define helper
-  (lambda (live-after stms graph)
+  (lambda (live-after stms graph var-types)
     (if (null? stms) graph
       (helper (cdr live-after) (cdr stms) 
               (match (car stms)
                      [`(movq ,arg1 ,arg2)
-                       (add-edges-helper arg2 (car live-after) (list arg1 arg2) graph)]
+                       (add-edges-helper arg2 (car live-after) (list arg1 arg2) graph var-types)]
                      [`(movzbq ,arg1 ,arg2)
-                       (add-edges-helper arg2 (car live-after) (list arg1 arg2) graph)]
+                       (add-edges-helper arg2 (car live-after) (list arg1 arg2) graph var-types)]
                      [`(negq ,arg1)
-                       (add-edges-helper arg1 (car live-after) (list arg1) graph)]
+                       (add-edges-helper arg1 (car live-after) (list arg1) graph var-types)]
                      [`(if (eq? ,arg1 ,arg2) ,thn ,thn-lives ,els ,els-lives)
-                       (add-edges-helper arg2 (car live-after) (list arg1 arg2) (helper els-lives els (helper thn-lives thn graph)))]
+                       (add-edges-helper arg2 (car live-after) (list arg1 arg2) (helper els-lives els (helper thn-lives thn graph var-types)))]
                      [`(,op ,arg1 ,arg2)
-                       (add-edges-helper arg2 (car live-after) (list arg2) graph)]
+                       (add-edges-helper arg2 (car live-after) (list arg2) graph var-types)]
                      [else graph]
-                     )))))
+                     )
+              var-types))))
 
 (define build-interference
   (lambda (program)
     (match program
            [`(program (,vars ,live-afters ,type) ,stms)
-             `(program ,(list vars (helper live-afters stms (make-graph vars)) type) ,stms)])))
+             (let ([vars (set-union (map car vars) caller-save)]
+                   [var-types vars])
+                  `(program ,(list vars (helper live-afters stms (make-graph vars) var-types) type ) ,stms))])))
