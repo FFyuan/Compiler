@@ -34,7 +34,7 @@
                      [`(negq ,arg1)
                        (add-edges-helper arg1 (car live-after) (list arg1) graph var-types)]
                      [`(if (eq? ,arg1 ,arg2) ,thn ,thn-lives ,els ,els-lives)
-                       (add-edges-helper arg2 (car live-after) (list arg1 arg2) (helper els-lives els (helper thn-lives thn graph var-types)))]
+                       (add-edges-helper arg2 (car live-after) (list arg1 arg2) (helper els-lives els (helper thn-lives thn graph var-types) var-types))]
                      [`(,op ,arg1 ,arg2)
                        (add-edges-helper arg2 (car live-after) (list arg2) graph var-types)]
                      [else graph]
