@@ -10,7 +10,7 @@
 
 (define lower-conditionals-stms
   (lambda (stms)
-    (if  (null? stms) '()
+    (if (null? stms) '()
       (match (car stms)
              [`(if (eq? ,arg1 ,arg2) ,thn ,els)
                (let ([then-label (gensym "then")]

@@ -87,6 +87,7 @@ int64_t* to_ptr(int64_t* p) {
 // initialize the state of the collector so that allocations can occur
 void initialize(uint64_t rootstack_size, uint64_t heap_size)
 {
+  heap_size = 10000000;
   // 1. Check to make sure that our assumptions about the world are correct.
   assert(sizeof(int64_t) == sizeof(int64_t*));
   assert((heap_size % sizeof(int64_t)) == 0);

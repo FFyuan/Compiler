@@ -49,4 +49,3 @@
  (define test
    (lambda (e)
      (view-has-type (expose-allocation e))))
-

@@ -3,7 +3,7 @@
 (require (for-syntax racket))
 (provide debug-level debug verbose vomit
          map2 map3 b2i i2b
-         fix while 
+         fix while make-list
          label-name lookup  make-dispatcher assert
          read-fixnum read-program 
 	 compile compile-file check-passes interp-tests compiler-tests
@@ -12,6 +12,11 @@
 	 general-registers registers-for-alloc caller-save callee-save
 	 arg-registers register->color registers align
          byte-reg->full-reg print-by-type view-has-type)
+
+(define make-list
+  (lambda (n)
+    (if (= 0 n) '()
+      (append (make-list (- n 1)) (list n)))))
 
 (define view-has-type
   (lambda (e)

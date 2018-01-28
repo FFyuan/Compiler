@@ -45,7 +45,8 @@
 
 (define vec?
   (lambda (v vtypes)
-    (equal? `Vector (lookup v vtypes))))
+    (let ([vtype (lookup v vtypes)])
+      (and (list? vtype) (equal? `Vector (car vtype))))))
 
 (define allocate-registers-insts
   (lambda (insts alist var-types rspillslst)
@@ -63,7 +64,7 @@
                                              [`(var ,var)
                                                (if (vec? var var-types)
                                                  (let ([spillloc (lookup var rspillslst)])
-                                                    `(deref (global-value rootstack_begin) (- spillloc)))
+                                                    `(deref r15 ,spillloc))
                                                  (let ([value (car (lookup var alist))])
                                                           (cond
                                                             [(< value (length regs)) `(reg ,(list-ref regs value))]
@@ -78,16 +79,23 @@
     (match program
            [`(program (,vars ,graph ,type) ,stms)
              (let* ([alist (color-graph graph (map car vars))]
-                    [maxn (* 16 (apply max (append '(0) (map cadr alist))))]
+                    [max (apply max (append '(0) (map cadr alist)))]
+                    [maxn (* 16 max)]
                     [var-types vars]
-                    [rspills (* 16 (length (filter (lambda (e)
-                                                        (vec? e var-types)) (map car var-types))))]
-                    [rspillslst (let loop ([a 0]
-                                           [vars (map car var-types)]
+                    [vec-colors (filter (lambda (v) (vec? (car v) var-types)) alist)]
+                    [colors-for-vec (sort (set->list (list->set (map cadr vec-colors))) <)]
+                    [color-to-spillloc (let loop ([cs colors-for-vec]
+                                                  [loc 0]
+                                                  [csmap '()])
+                                            (if (null? cs)
+                                                csmap
+                                                (cons `(,(car cs) . ,loc) (loop (cdr cs) (+ 16 loc) csmap))))]
+                    [rspills (* 16 (length colors-for-vec))]
+                    [rspillslst (let loop ([vecs (map car vec-colors)]
                                            [rspillslst '()])
-                                    (cond
-                                      [(null? vars) rspillslst]
-                                      [(not (vec? (car vars) var-types)) (loop a (cdr vars) rspillslst)]
-                                      [else (cons `(,(car vars) . ,a) (loop (+ 1 a) (cdr vars) rspillslst))]))])
+                                    (if (null? vecs)
+                                        rspillslst
+                                        (cons `(,(car vecs) . ,(lookup (car (lookup (car vecs) alist)) color-to-spillloc))
+                                          (loop (cdr vecs) rspillslst))))])
                     `(program (,maxn ,rspills) ,type ,(allocate-registers-insts stms alist var-types rspillslst)))]
            )))

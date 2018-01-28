@@ -16,7 +16,7 @@
     (bitwise-ior 1 (arithmetic-shift len 1))))
 
 (define select-intr-stms
-  (lambda (stms) 
+  (lambda (stms)
     (if (null? stms) (list)
       (match (car stms)
              [`(assign ,var (global-value ,arg1))
@@ -24,14 +24,18 @@
                  ,@(select-intr-stms (cdr stms)))
                ]
              [`(assign ,var (vector-ref ,vec, n))
-               `((movq ,(select-intr-arg vec) (reg r11))
+               `((label ,(gensym "vector_ref_starts"))
+                 (movq ,(select-intr-arg vec) (reg r11))
                  (movq (deref r11 ,(* 16 (+ 1 n))) ,(select-intr-arg var))
+                 (label ,(gensym "vector_ref_ends"))
                  ,@(select-intr-stms (cdr stms)))
                ]
              [`(assign ,var (vector-set! ,vec ,n ,arg))
-               `((movq ,(select-intr-arg vec) (reg r11))
+               `((label ,(gensym "vector_set_starts"))
+                 (movq ,(select-intr-arg vec) (reg r11))
                  (movq ,(select-intr-arg arg) (deref r11 ,(* 16 (+ 1 n))))
                  (movq (int 0) ,(select-intr-arg var))
+                 (label ,(gensym "vector_set_ends"))
                  ,@(select-intr-stms (cdr stms)))
                ]
              [`(assign ,var (collect ,bytes))
@@ -46,7 +50,7 @@
                ]
              [`(assign ,var (allocate ,len (Vector ,type ...)))
                `((movq (global-value free_ptr) ,(select-intr-arg var))
-                 (addq (int ,(* 8 (+ 1 len))) (global-value free_ptr))
+                 (addq (int ,(* 16 (+ 1 len))) (global-value free_ptr))
                  (movq ,(select-intr-arg var) (reg r11))
                  (movq (int ,(make-tag len)) (deref r11 0))
                  ,@(select-intr-stms (cdr stms)))
@@ -101,5 +105,3 @@
   (lambda (p)
     (match p
            [`(program ,vars ,type ,stms) `(program ,vars ,type ,(select-intr-stms stms))] )))
-
-
