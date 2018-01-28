@@ -44,7 +44,7 @@
                  (movq (int 0) ,(select-intr-arg var))
                  ,@(select-intr-stms (cdr stms)))
                ]
-             [`(assign ,var (allocate ,len (Vector ,type)))
+             [`(assign ,var (allocate ,len (Vector ,type ...)))
                `((movq (global-value free_ptr) ,(select-intr-arg var))
                  (addq (int ,(* 8 (+ 1 len))) (global-value free_ptr))
                  (movq ,(select-intr-arg var) (reg r11))
