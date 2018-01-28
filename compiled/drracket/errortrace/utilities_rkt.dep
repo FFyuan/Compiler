@@ -1,1 +1,0 @@
-("6.11" ("99cc60b3742fb6710d80b2b90fe781b6c6a14165" . "e0e57fff6c5b1764083c257df80014ded48ff25a") (collects #"errortrace" #"errortrace-key.rkt") (collects #"racket" #"main.rkt") (collects #"racket" #"pretty.rkt") (collects #"racket" #"runtime-config.rkt") (indirect collects #"racket" #"match" #"gen-match.rkt") (indirect collects #"racket" #"match" #"parse.rkt"))
