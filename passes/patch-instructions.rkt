@@ -21,6 +21,11 @@
                  (cons `(movq ,arg2 (reg rax))
                          (cons `(cmpq ,arg1 (reg rax)) (patch-instructions-stms (cdr stms))))
                  (cons (car stms) (patch-instructions-stms (cdr stms))))]
+             [`(,op ,arg1 ,arg2)
+               (if (and (equal? 'deref (car arg1)) (equal? 'deref (car arg2)))
+                 (cons `(movq ,arg2 (reg rax))
+                         (cons `(,op ,arg1 (reg rax)) (patch-instructions-stms (cdr stms))))
+                 (cons (car stms) (patch-instructions-stms (cdr stms))))]
              [else (cons (car stms) (patch-instructions-stms (cdr stms)))])))) 
 
 (define patch-instructions
