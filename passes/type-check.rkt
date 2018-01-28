@@ -26,7 +26,7 @@
            [`(if ,(app (type-check-R3 env) e-cnd t-cnd) ,(app (type-check-R3 env) e-thn t-thn) ,(app (type-check-R3 env) e-els t-els))
              (if (eq? 'Boolean t-cnd)
                (if (eq?  t-thn t-els)
-                 (values `(has-type (if ,e-cnd ,e-thn ,e-els)) t-thn)
+                 (values `(has-type (if ,e-cnd ,e-thn ,e-els) ,t-thn) t-thn)
                  (error `type-check-r2 "'if' expects 'then' and 'else' to be the same type: ~a" e))
                (error `type-check-r2 "'if' expects condition to be Boolean: ~a" e))]
            [`(- ,(app (type-check-R3 env) e t))
@@ -38,7 +38,7 @@
                (values `(has-type (+ ,e1 ,e2) Integer) 'Integer)
                (error 'type-check-R3 "'+' expects two Integers: ~a" e))]
            [`(read)
-               (values `(has-type e 'Integer) 'Integer)]
+               (values `(has-type (read) 'Integer) 'Integer)]
            [`(void) (values `(has-type (void) Void) `Void)]
            [`(vector ,(app (type-check-R3 env) e* t*) ...)
              (let ([t `(Vector ,@t*)])

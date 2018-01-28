@@ -47,11 +47,11 @@
                         )) stms)) 
       (match type
         [`(type Integer) (string-append "    callq " (if mac? "_" "") "print_int" "\n")]
-        [`(type Boolean) (string-append "    callq " (if mac? "_" "") "print_bool" "\n")])
+        [`(type Boolean) (string-append "    callq " (if mac? "_" "") "print_bool" "\n")]
+        [`(type (Vector ,type ...)) (string-append "    callq " (if mac? "_" "") "print_vector" "\n")]
+        [`(type Void) (string-append "    callq " (if mac? "_" "") "print_void" "\n")])
       "    movq $0, %rax" "\n"
       "    subq $" (number->string rspills) ", %r15" "\n"
       (if (< 0 size) (string-append  "    addq $" (number->string size) ", %rsp" "\n") "")
       "    popq %rbp" "\n"
       "    retq" "\n")])))
-
-
