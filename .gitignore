@@ -1,3 +1,5 @@
 a.out.dSYM
 compiled
 *.s
+*.out
+*.o
