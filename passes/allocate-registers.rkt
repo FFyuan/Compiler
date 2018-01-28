@@ -89,5 +89,5 @@
                                       [(null? vars) rspillslst]
                                       [(not (vec? (car vars) var-types)) (loop a (cdr vars) rspillslst)]
                                       [else (cons `(,(car vars) . ,a) (loop (+ 1 a) (cdr vars) rspillslst))]))])
-                    `(program ,maxn ,type ,(allocate-registers-insts stms alist var-types rspillslst)))]
+                    `(program (,maxn ,rspills) ,type ,(allocate-registers-insts stms alist var-types rspillslst)))]
            )))
