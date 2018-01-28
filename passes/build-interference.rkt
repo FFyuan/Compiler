@@ -46,4 +46,4 @@
     (match program
            [`(program (,var-types ,live-afters ,type) ,stms)
              (let ([vars (set-union (map car var-types) (set->list caller-save))])
-                  `(program ,(list vars (helper live-afters stms (make-graph vars) var-types) type ) ,stms))])))
+                  `(program ,(list var-types (helper live-afters stms (make-graph vars) var-types) type ) ,stms))])))
