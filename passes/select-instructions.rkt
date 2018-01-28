@@ -10,10 +10,37 @@
       [else (list 'var arg)]
       )))
 
+(define make-tag
+  (lambda (len)
+    (bitwise-ior 1 (arithmetic-shift len 1))))
+
 (define select-intr-stms
   (lambda (stms) 
     (if (null? stms) (list)
       (match (car stms)
+             [`(assign ,var (global-value ,arg1))
+               `((movq (global-value ,(select-intr-arg arg1)) ,var))
+               ]
+             [`(assign ,var (vector-ref ,vec, n))
+               `((movq ,vec (reg r11)
+                 (movq (deref r11 ,(* 16 (+ 1 n))) ,var))
+               ]
+             [`(assign ,var (vector-set! ,vec ,n ,arg))
+               `((movq ,vec (reg r11))
+                 (movq ,arg (deref r11 ,(* 16 (+ 1 n))))
+                 (movq (int 0) ,var))
+               ]
+             [`(collect ,bytes)
+               `((movq (reg 15) (reg rdi))
+                 (movq ,bytes (reg rsi))
+                 (callq collect))
+               ]
+             [`(assign ,var (allocate ,len (Vector ,type)))
+               `((movq (global-value free_ptr) ,var)
+                 (addq (int ,(* 8 (+ 1 len))) (global-value free_ptr))
+                 (movq ,var (reg r11))
+                 (movq (int ,(make-tag len)) (deref r11 0)))
+               ]
              [`(assign ,var (+ ,arg1 ,arg2)) 
                (cons (list `movq (select-intr-arg arg1) (select-intr-arg var)) 
                      (cons (list `addq (select-intr-arg arg2) (select-intr-arg var)) (select-intr-stms (cdr stms))))
