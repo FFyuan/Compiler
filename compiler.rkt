@@ -27,7 +27,7 @@
 
 (define test-compile
   (lambda (e)
-     (print-x86 (patch-instructions (lower-conditionals (allocate-registers (build-interference (uncover-live (select-instructions (flatten (uniquify (type-check e))))))))))))
+     (patch-instructions (lower-conditionals (allocate-registers (build-interference (uncover-live (select-instructions (flatten (expose-allocation (uniquify (type-check e))))))))))))
 
 (define tt
   (lambda (e)

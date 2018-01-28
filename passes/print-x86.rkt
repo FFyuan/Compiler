@@ -9,6 +9,7 @@
            [`(reg ,reg) (string-append "%" (symbol->string reg))]
            [`(byte-reg ,reg) (string-append "%" (symbol->string reg))]
            [`(deref ,reg ,value) (string-append (number->string value) "(%" (symbol->string reg) ")")]
+           [`(global-value ,val) (string-append "_" (symbol->string val) "(%rip)")]
            [else (symbol->string arg)])))
 
 (define print-x86

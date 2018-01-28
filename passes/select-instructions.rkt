@@ -35,7 +35,7 @@
                  ,@(select-intr-stms (cdr stms)))
                ]
              [`(assign ,var (collect ,bytes))
-               `((movq (reg 15) (reg rdi))
+               `((movq (reg r15) (reg rdi))
                  (movq ,(select-intr-arg bytes) (reg rsi))
                  ,(let ([mac? (equal? 'macosx (system-type 'os))])
                     (if mac?
