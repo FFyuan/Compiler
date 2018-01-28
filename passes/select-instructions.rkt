@@ -31,7 +31,7 @@
              [`(assign ,var (vector-set! ,vec ,n ,arg))
                `((movq ,(select-intr-arg vec) (reg r11))
                  (movq ,(select-intr-arg arg) (deref r11 ,(* 16 (+ 1 n))))
-                 (movq (int 0) ,var)
+                 (movq (int 0) ,(select-intr-arg var))
                  ,@(select-intr-stms (cdr stms)))
                ]
              [`(assign ,var (collect ,bytes))
