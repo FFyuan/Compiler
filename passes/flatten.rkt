@@ -13,6 +13,8 @@
                     [`(void) (values exp null null)]
                     [`(allocate ,count ,type)
                       (values exp null null)]
+                    [`(collect ,(app flatten-helper newExp stms var))
+                      (values `(collect ,newExp) null null)]
                     [`(global-value free_ptr) 
                       (let ([newExp (gensym "tmp")])
                         (values newExp 
