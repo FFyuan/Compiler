@@ -5,6 +5,7 @@
 
 (require "passes/type-check.rkt")
 (require "passes/uniquify.rkt")
+(require "passes/expose-allocation.rkt")
 (require "passes/flatten.rkt")
 (require "passes/select-instructions.rkt")
 ;(require "passes/assign-homes.rkt")
@@ -12,7 +13,8 @@
 (require "passes/build-interference.rkt")
 (require "passes/allocate-registers.rkt")
 (require "passes/lower-conditionals.rkt")
-(require "passes/patch-instructions.rkt") (require "passes/print-x86.rkt")
+(require "passes/patch-instructions.rkt") 
+(require "passes/print-x86.rkt")
 
 (define r1-passes
   `(("uniquify" ,uniquify ,null)
@@ -44,15 +46,16 @@
     (build-interference (uncover-live (select-instructions (flatten (uniquify (type-check e))))))))
 
 (define r3-passes
-  `(;("uniquify" ,uniquify ,null)
-    ;("flatten" ,flatten ,null)
-    ;("select-instructions" ,select-instructions ,null)
-    ;("uncover-live" ,uncover-live ,null)
-    ;("build-interference" ,build-interference ,null)
-    ;("allocate-registers" ,allocate-registers ,null)
-    ;("lower-conditionals" ,lower-conditionals ,null)
-    ;("patch-instructions" ,patch-instructions ,null)
-    ;("print-x86" ,print-x86 ,interp-x86)
+  `(("uniquify" ,uniquify ,null)
+    ("flatten" ,flatten ,null)
+    ("expose-allocation" ,expose-allocation ,null)
+    ("select-instructions" ,select-instructions ,null)
+    ("uncover-live" ,uncover-live ,null)
+    ("build-interference" ,build-interference ,null)
+    ("allocate-registers" ,allocate-registers ,null)
+    ("lower-conditionals" ,lower-conditionals ,null)
+    ("patch-instructions" ,patch-instructions ,null)
+    ("print-x86" ,print-x86 ,interp-x86)
     ))
 
 
