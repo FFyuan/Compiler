@@ -34,10 +34,14 @@
                  (movq (int 0) ,var)
                  ,@(select-intr-stms (cdr stms)))
                ]
-             [`(collect ,bytes)
+             [`(assign ,var (collect ,bytes))
                `((movq (reg 15) (reg rdi))
                  (movq ,(select-intr-arg bytes) (reg rsi))
-                 (callq collect)
+                 ,(let ([mac? (equal? 'macosx (system-type 'os))])
+                    (if mac?
+                        `(callq _collect)
+                        `(callq _collect)))
+                 (movq (int 0) ,(select-intr-arg var))
                  ,@(select-intr-stms (cdr stms)))
                ]
              [`(assign ,var (allocate ,len (Vector ,type)))
