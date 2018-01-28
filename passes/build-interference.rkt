@@ -45,5 +45,5 @@
   (lambda (program)
     (match program
            [`(program (,var-types ,live-afters ,type) ,stms)
-             (let ([vars (set-union (map car var-types) (set->list caller-save))]])
+             (let ([vars (set-union (map car var-types) (set->list caller-save))])
                   `(program ,(list vars (helper live-afters stms (make-graph vars) var-types) type ) ,stms))])))
