@@ -44,7 +44,6 @@
 (define build-interference
   (lambda (program)
     (match program
-           [`(program (,vars ,live-afters ,type) ,stms)
-             (let ([vars (set-union (map car vars) (set->list caller-save))]
-                   [var-types vars])
+           [`(program (,var-types ,live-afters ,type) ,stms)
+             (let ([vars (set-union (map car var-types) (set->list caller-save))]])
                   `(program ,(list vars (helper live-afters stms (make-graph vars) var-types) type ) ,stms))])))
