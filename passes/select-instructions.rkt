@@ -7,6 +7,7 @@
     (match arg
       [(? integer?) (list 'int arg)]
       [(? boolean?) (list 'int (if arg 1 0))]
+      [`(void) `(int 0)]
       [else (list 'var arg)]
       )))
 
@@ -19,27 +20,32 @@
     (if (null? stms) (list)
       (match (car stms)
              [`(assign ,var (global-value ,arg1))
-               `((movq (global-value ,(select-intr-arg arg1)) ,var))
+               `((movq (global-value ,arg1) ,(select-intr-arg var))
+                 ,@(select-intr-stms (cdr stms)))
                ]
              [`(assign ,var (vector-ref ,vec, n))
-               `((movq ,vec (reg r11)
-                 (movq (deref r11 ,(* 16 (+ 1 n))) ,var))
+               `((movq ,(select-intr-arg vec) (reg r11))
+                 (movq (deref r11 ,(* 16 (+ 1 n))) ,(select-intr-arg var))
+                 ,@(select-intr-stms (cdr stms)))
                ]
              [`(assign ,var (vector-set! ,vec ,n ,arg))
-               `((movq ,vec (reg r11))
-                 (movq ,arg (deref r11 ,(* 16 (+ 1 n))))
-                 (movq (int 0) ,var))
+               `((movq ,(select-intr-arg vec) (reg r11))
+                 (movq ,(select-intr-arg arg) (deref r11 ,(* 16 (+ 1 n))))
+                 (movq (int 0) ,var)
+                 ,@(select-intr-stms (cdr stms)))
                ]
              [`(collect ,bytes)
                `((movq (reg 15) (reg rdi))
-                 (movq ,bytes (reg rsi))
-                 (callq collect))
+                 (movq ,(select-intr-arg bytes) (reg rsi))
+                 (callq collect)
+                 ,@(select-intr-stms (cdr stms)))
                ]
              [`(assign ,var (allocate ,len (Vector ,type)))
-               `((movq (global-value free_ptr) ,var)
+               `((movq (global-value free_ptr) ,(select-intr-arg var))
                  (addq (int ,(* 8 (+ 1 len))) (global-value free_ptr))
-                 (movq ,var (reg r11))
-                 (movq (int ,(make-tag len)) (deref r11 0)))
+                 (movq ,(select-intr-arg var) (reg r11))
+                 (movq (int ,(make-tag len)) (deref r11 0))
+                 ,@(select-intr-stms (cdr stms)))
                ]
              [`(assign ,var (+ ,arg1 ,arg2)) 
                (cons (list `movq (select-intr-arg arg1) (select-intr-arg var)) 
