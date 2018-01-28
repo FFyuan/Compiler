@@ -19,7 +19,7 @@
 
 (define expose-allocation-helper
   (lambda (es esr types count alloc-sym)
-    (define bytes (+ 8 (* 8 count)))
+    (define bytes (+ 16 (* 16 count)))
     (if (null? es)
       `(has-type (let ([,(gensym "collectret") (has-type (if 
                                       (has-type (< (has-type (+ (has-type (global-value free_ptr)Integer) (has-type ,bytes Integer)) Integer) (has-type (global-value fromspace_end) Integer)) Boolean)
