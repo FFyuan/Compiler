@@ -16,7 +16,7 @@
   (lambda (p)
     (match p
            [`(program ,vars ,stms) 
-             (let ([alist (letrec ([helper (lambda (vars n) (if (null? vars) (list) (cons (list (car vars) (- n 16)) (helper (cdr vars) (- n 16)))))]) (helper vars 0))] [maxn (* 16 (length vars))]) 
+             (let ([alist (letrec ([helper (lambda (vars n) (if (null? vars) (list) (cons (list (car vars) (- n 16)) (helper (cdr vars) (- n 16)))))]) (helper vars 0))] [maxn (* 16 (length vars))])
                `(program ,maxn ,(assign-homes-insts stms alist)))])))
 
 

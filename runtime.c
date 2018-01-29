@@ -87,7 +87,6 @@ int64_t* to_ptr(int64_t* p) {
 // initialize the state of the collector so that allocations can occur
 void initialize(uint64_t rootstack_size, uint64_t heap_size)
 {
-  heap_size = 10000000;
   // 1. Check to make sure that our assumptions about the world are correct.
   assert(sizeof(int64_t) == sizeof(int64_t*));
   assert((heap_size % sizeof(int64_t)) == 0);
@@ -310,23 +309,29 @@ void cheney(int64_t** rootstack_ptr)
   int64_t** scan_ptr = tospace_begin;
   free_ptr = tospace_begin;
   // Add everything on the rootstack to queue/toSpace
-  while (rootstack_ptr_cpy < rootstack_end) {
-    copy_vector(rootstack_ptr_cpy);
-    rootstack_ptr_cpy++;
+  int called = 0;
+  while (rootstack_ptr_cpy >= rootstack_begin) {
+    if (*rootstack_ptr_cpy != NULL) {
+      copy_vector(rootstack_ptr_cpy);
+      called = 1;
+    }
+    rootstack_ptr_cpy--;
   }
 
-  while (scan_ptr < free_ptr) {
-    int64_t* vector_ptr = *scan_ptr;
-    int64_t tag = *vector_ptr;
-    // a pointer here should not be a forwarding pointer if copy_vector() is done right
-    int64_t bitfield = get_ptr_bitfield(tag);
-    int64_t length = get_length(tag);
-    int64_t length_to_check = length;
-    int64_t mask = 1;
-    for (int i = 0; i < length_to_check; i++) {
-      int nextbit = (bitfield & (mask << i)) >> i;
-      if (nextbit) {
-        copy_vector(vector_ptr + i);
+  if (called) {
+    while (scan_ptr < free_ptr) {
+      int64_t* vector_ptr = *scan_ptr;
+      int64_t tag = *vector_ptr;
+      // a pointer here should not be a forwarding pointer if copy_vector() is done right
+      int64_t bitfield = get_ptr_bitfield(tag);
+      int64_t length = get_length(tag);
+      int64_t length_to_check = length;
+      int64_t mask = 1;
+      for (int i = 0; i < length_to_check; i++) {
+        int nextbit = (bitfield & (mask << i)) >> i;
+        if (nextbit) {
+          copy_vector(vector_ptr + i);
+        }
       }
     }
   }
@@ -336,6 +341,9 @@ void cheney(int64_t** rootstack_ptr)
   int64_t* temp;
   temp = fromspace_begin;
   fromspace_begin = tospace_begin;
+  if (!called) {
+    free_ptr = fromspace_begin;
+  }
   tospace_begin = temp;
 
   temp = fromspace_end;

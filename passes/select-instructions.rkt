@@ -11,14 +11,13 @@
       [else (list 'var arg)]
       )))
 
-(define (make-tag len)
-  (let ([base (bitwise-ior 1 (arithmetic-shift len 1))])
-    (lambda (types)
-      (cond
-        [(null? types) base]
+(define (make-tag len types cur_pos)
+  (let ([offset 7])
+    (cond
+        [(null? types) (bitwise-ior 1 (arithmetic-shift len 1))]
         [(and (pair? (car types)) (equal? 'Vector (caar types)))
-          (bitwise-ior (arithmetic-shift 1 (- (length types) len)) ((make-tag len) (cdr types)))]
-        [else (begin (pretty-print types) ((make-tag len) (cdr types)))]))))
+          (bitwise-ior (arithmetic-shift 1 (+ offset cur_pos)) (make-tag len (cdr types) (+ 1 cur_pos)))]
+        [else (make-tag len (cdr types) (+ 1 cur_pos))])))
 
 (define select-intr-stms
   (lambda (stms)
@@ -31,33 +30,37 @@
              [`(assign ,var (vector-ref ,vec, n))
                `((label ,(gensym "vector_ref_starts"))
                  (movq ,(select-intr-arg vec) (reg r11))
-                 (movq (deref r11 ,(* 16 (+ 1 n))) ,(select-intr-arg var))
+                 (movq (deref r11 ,(* 8 (+ 1 n))) ,(select-intr-arg var))
                  (label ,(gensym "vector_ref_ends"))
                  ,@(select-intr-stms (cdr stms)))
                ]
              [`(assign ,var (vector-set! ,vec ,n ,arg))
                `((label ,(gensym "vector_set_starts"))
                  (movq ,(select-intr-arg vec) (reg r11))
-                 (movq ,(select-intr-arg arg) (deref r11 ,(* 16 (+ 1 n))))
+                 (movq ,(select-intr-arg arg) (deref r11 ,(* 8 (+ 1 n))))
                  (movq (int 0) ,(select-intr-arg var))
                  (label ,(gensym "vector_set_ends"))
                  ,@(select-intr-stms (cdr stms)))
                ]
              [`(assign ,var (collect ,bytes))
-               `((movq (reg r15) (reg rdi))
+               `((label ,(gensym "collect_starts"))
+                 (movq (reg r15) (reg rdi))
                  (movq ,(select-intr-arg bytes) (reg rsi))
                  ,(let ([mac? (equal? 'macosx (system-type 'os))])
                     (if mac?
                         `(callq _collect)
                         `(callq _collect)))
                  (movq (int 0) ,(select-intr-arg var))
+                 (label ,(gensym "collect_ends"))
                  ,@(select-intr-stms (cdr stms)))
                ]
              [`(assign ,var (allocate ,len (Vector ,types ...)))
-               `((movq (global-value free_ptr) ,(select-intr-arg var))
-                 (addq (int ,(* 16 (+ 1 len))) (global-value free_ptr))
+               `((label ,(gensym "allocate_starts"))
+                 (movq (global-value free_ptr) ,(select-intr-arg var))
+                 (addq (int ,(* 8 (+ 1 len))) (global-value free_ptr))
                  (movq ,(select-intr-arg var) (reg r11))
-                 (movq (int ,((make-tag len) types)) (deref r11 0))
+                 (movq (int ,(make-tag len types 0)) (deref r11 0))
+                 (label ,(gensym "allocate_ends"))
                  ,@(select-intr-stms (cdr stms)))
                ]
              [`(assign ,var (+ ,arg1 ,arg2)) 

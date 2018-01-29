@@ -20,8 +20,7 @@
            [`(program ,type ,e)
              `(program ,type ,((uniquify-helper alist) e))]
            )))
+
 (define uniquify
   (lambda (e)
     ((uniquify-helper '()) e)))
-
-

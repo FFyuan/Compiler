@@ -1,6 +1,7 @@
 #lang racket
 (require "../utilities.rkt")
 (provide type-check)
+
 (define (type-check-R3 env)
   (lambda (e)
     (match e
@@ -13,7 +14,7 @@
              (values `(has-type (let ([,x ,e]) ,e-body) ,T-body) T-body)]
            [`(not ,(app (type-check-R3 env) e t))
              (match t
-                    [`Boolean (values `(has-type ,e Boolean) 'Boolean)]
+                    [`Boolean (values `(has-type (not ,e) Boolean) 'Boolean)]
                     [else (error `type-check-r3 "`not` expects a Boolean: ~a" e)])]
            [`(and ,(app (type-check-R3 env) e1 t1) ,(app (type-check-R3 env) e2 t2))
              (match t1

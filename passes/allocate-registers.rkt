@@ -41,7 +41,7 @@
            ) sats)
     ))
 
-(define regs '(rbx))
+(define regs '(rbx rcx rdx rsi rdi r8 r9 r10 r12 r13 r14))
 
 (define vec?
   (lambda (v vtypes)
@@ -64,7 +64,7 @@
                                              [`(var ,var)
                                                (if (vec? var var-types)
                                                  (let ([spillloc (lookup var rspillslst)])
-                                                    `(deref r15 ,spillloc))
+                                                    `(deref r15 ,(- spillloc)))
                                                  (let ([value (car (lookup var alist))])
                                                           (cond
                                                             [(< value (length regs)) `(reg ,(list-ref regs value))]
@@ -85,12 +85,12 @@
                     [vec-colors (filter (lambda (v) (vec? (car v) var-types)) alist)]
                     [colors-for-vec (sort (set->list (list->set (map cadr vec-colors))) <)]
                     [color-to-spillloc (let loop ([cs colors-for-vec]
-                                                  [loc 0]
+                                                  [loc 8]
                                                   [csmap '()])
                                             (if (null? cs)
                                                 csmap
-                                                (cons `(,(car cs) . ,loc) (loop (cdr cs) (+ 16 loc) csmap))))]
-                    [rspills (* 16 (length colors-for-vec))]
+                                                (cons `(,(car cs) . ,loc) (loop (cdr cs) (+ 8 loc) csmap))))]
+                    [rspills (* 8 (length colors-for-vec))]
                     [rspillslst (let loop ([vecs (map car vec-colors)]
                                            [rspillslst '()])
                                     (if (null? vecs)
