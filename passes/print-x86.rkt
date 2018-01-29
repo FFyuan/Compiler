@@ -92,12 +92,9 @@
                         (string-append "    " (symbol->string op) " " (print-x86-arg arg1) ", " (print-x86-arg arg2) "\n")]
                       [`(,op ,arg1)
                         (string-append "    " (symbol->string op) " " (print-x86-arg arg1) "\n")]
-                        )) stms)) 
-      (match type
-        ['Integer (string-append "    callq " (if mac? "_" "") "print_int" "\n")]
-        ['Boolean (string-append "    callq " (if mac? "_" "") "print_bool" "\n")]
-        [`(Vector ,type ...) (string-append "    callq " (if mac? "_" "") "print_vector" "\n")]
-        ['Void (string-append "    callq " (if mac? "_" "") "print_void" "\n")])
+                        )) stms))
+      "    movq %rdi, %rax" "\n"
+      (print-by-type type)
       "    movq $0, %rax" "\n"
       "    subq $" (number->string rspills) ", %r15" "\n"
       (if (< 0 size) (string-append  "    addq $" (number->string size) ", %rsp" "\n") "")
