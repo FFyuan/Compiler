@@ -1,5 +1,6 @@
 #lang racket
 (require "../utilities.rkt")
+(require "../runtime-config.rkt")
 (provide print-x86)
 
 (define print-x86-arg
@@ -65,8 +66,8 @@
         (print-save-callee-save)
         "    movq %rsp, %rbp" "\n" 
         (if (< 0 size) (string-append "    subq $" (number->string size) ", %rsp" "\n") "")
-        "    movq $2097152, %rdi" "\n"
-        "    movq $320000, %rsi" "\n"
+        "    movq $" (number->string (rootstack-size)) ", %rdi" "\n"
+        "    movq $" (number->string (heap-size)) ", %rsi" "\n"
         (print-save-caller-save)
         "    callq _initialize" "\n"
         (print-restore-caller-save)
