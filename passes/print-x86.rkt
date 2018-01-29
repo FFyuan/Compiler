@@ -24,8 +24,8 @@
         "    pushq %rbp" "\n"
         "    movq %rsp, %rbp" "\n" 
         (if (< 0 size) (string-append "    subq $" (number->string size) ", %rsp" "\n") "")
-        "    movq $16384, %rdi" "\n"
-        "    movq $16, %rsi" "\n"
+        "    movq $32768, %rdi" "\n"
+        "    movq $32, %rsi" "\n"
         "    callq _initialize" "\n"
         "    movq _rootstack_begin(%rip), %r15" "\n"
         "    movq $0, (%r15)" "\n"

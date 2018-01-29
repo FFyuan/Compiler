@@ -11,9 +11,14 @@
       [else (list 'var arg)]
       )))
 
-(define make-tag
-  (lambda (len)
-    (bitwise-ior 1 (arithmetic-shift len 1))))
+(define (make-tag len)
+  (let ([base (bitwise-ior 1 (arithmetic-shift len 1))])
+    (lambda (types)
+      (cond
+        [(null? types) base]
+        [(and (pair? (car types)) (equal? 'Vector (caar types)))
+          (bitwise-ior (arithmetic-shift 1 (- (length types) len)) ((make-tag len) (cdr types)))]
+        [else (begin (pretty-print types) ((make-tag len) (cdr types)))]))))
 
 (define select-intr-stms
   (lambda (stms)
@@ -48,11 +53,11 @@
                  (movq (int 0) ,(select-intr-arg var))
                  ,@(select-intr-stms (cdr stms)))
                ]
-             [`(assign ,var (allocate ,len (Vector ,type ...)))
+             [`(assign ,var (allocate ,len (Vector ,types ...)))
                `((movq (global-value free_ptr) ,(select-intr-arg var))
                  (addq (int ,(* 16 (+ 1 len))) (global-value free_ptr))
                  (movq ,(select-intr-arg var) (reg r11))
-                 (movq (int ,(make-tag len)) (deref r11 0))
+                 (movq (int ,((make-tag len) types)) (deref r11 0))
                  ,@(select-intr-stms (cdr stms)))
                ]
              [`(assign ,var (+ ,arg1 ,arg2)) 
