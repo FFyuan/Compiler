@@ -3,43 +3,45 @@
 (provide allocate-registers)
 
 ;input: interference graph, variables
-;output: a mapping of varibles to colors. ex: (('x 0) ('y 1))
-(define color-graph
-  (lambda (graph vars)
-    (let recur ([colors '()] [sats (map (lambda (x) (list x '())) vars)]) 
-      (if (null? sats) colors
-        (let* ([u (foldl (lambda (n result)
-                           (if (> (length (cadr n)) (length (cadr result)))
-                             n
-                             result
-                             )) (car sats) sats)]
-               [new-color (find-color (car u) graph colors)]
-               [new-sats (fill-saturation graph (list (car u) new-color) (remove u sats))])
-          ;(display (car u)) (display new-color) (newline) (display new-sats) (newline)
-          (recur (cons (list (car u) new-color) colors) new-sats))))))
+;output: a graph of variables to colors.
+(define (color-graph g vars)
+  (let ([rg (make-graph vars)])
+    (while (not (null? vars))
+      (set! vars (sort vars (lambda (a b)
+                              (let ([neighborsA (set->list (adjacent g a))]
+                                    [neighborsB (set->list (adjacent g b))])
+                                    (let ([countColored (lambda (n)
+                                                          (if (null? (adjacent rg n))
+                                                              0
+                                                              1))])
+                                          (let ([countA (apply + (map countColored neighborsA))]
+                                                [countB (apply + (map countColored neighborsB))])
+                                                (>= countA countB)))))))
+      (let ([mostSaturated (car vars)])
+        (let ([neighbors (set->list (adjacent g mostSaturated))])
+          (let ([lowestColor (let ([neighborColors (map (lambda (n) (if (set-empty? (adjacent rg n))
+                                                                          #f
+                                                                          (car (set->list (adjacent rg n))))) neighbors)])
+            (let loop ([lowestColor 0])
+              (if (member lowestColor neighborColors)
+                  (loop (+ 1 lowestColor))
+                  lowestColor)))])
+            (add-edge rg mostSaturated lowestColor)
+            (set! vars (remove mostSaturated vars))))))
+    rg))
 
-;input: Node u, graph, existing colors
-;output: lowest color is not in colors[adjacent[u]]
-(define find-color
-  (lambda (u graph colors)
-    (let ([ls (sort (map cadr (filter (lambda (x) (not (null? x))) (map (lambda (v) ((lambda (p) (if (null? p) null (car p))) (filter (lambda (pair) (equal? v (car pair))) colors))) (set->list (adjacent graph u))))) <)])
-      ;(display ls) (newline)
-      (letrec ([helper (lambda (ls index)
-                         (if (null? ls) index
-                           (if (equal? (car ls) index) 
-                             (helper (cdr ls) (+ 1 index))
-                             index)))])
-        (helper ls 0)))))
-
-;output: new filled saturations
-(define fill-saturation
-  (lambda (graph new-color sats) 
-    (map (lambda (pair) 
-           (if (member (car pair) (set->list (adjacent graph (car new-color))))
-             (list (car pair) (set-add (cadr pair) (cadr new-color)))
-             pair)
-           ) sats)
-    ))
+(define (color-graph-convert g)
+  (let* ([colors (filter number? (vertices g))]
+        [color-vars (map (lambda (color) (set->list (adjacent g color))) colors)])
+    (let loop ([colors colors]
+               [color-vars color-vars]
+               [ls '()])
+         (if (null? colors)
+             ls
+             (begin
+               (map (lambda (var)
+                       (set! ls (cons `(,var ,(car colors)) ls))) (car color-vars))
+               (loop (cdr colors) (cdr color-vars) ls))))))
 
 (define regs '(rbx rcx rdx rsi rdi r8 r9 r10 r12 r13 r14))
 
@@ -78,13 +80,13 @@
   (lambda (program)
     (match program
            [`(program (,vars ,graph ,type) ,stms)
-             (let* ([alist (color-graph graph (map car vars))]
+             (let* ([alist (color-graph-convert (color-graph graph (map car vars)))]
                     [max (apply max (append '(0) (map cadr alist)))]
                     [maxn (* 16 max)]
                     [var-types vars]
                     [vec-colors (filter (lambda (v) (vec? (car v) var-types)) alist)]
                     [colors-for-vec (sort (set->list (list->set (map cadr vec-colors))) <)]
-                    [color-to-spillloc (let loop ([cs colors-for-vec]
+                    [color-to-spillloc (let loop ([cs (reverse colors-for-vec)]
                                                   [loc 8]
                                                   [csmap '()])
                                             (if (null? cs)
